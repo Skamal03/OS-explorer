@@ -3,29 +3,53 @@ from tkinter import ttk, simpledialog, messagebox
 from main import Kernel
 
 class OSControlPanel:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("MySimOS - Main Control Panel")
+    def __init__(self, root):
+        self.master = root
+        self.master.title("OS-Explorer - Control Panel")
+        style = ttk.Style(root)
+        style.theme_use('clam')
+
+        style.configure('TButton', padding=6, relief='raised', font=('Segoe UI', 10))
+        style.map('TButton',
+                  foreground=[('active', 'red')],
+                  background=[('active', '#f0f0f0')])
+
+        style.configure('Heading.TLabel', font=('Arial', 18, 'bold'), foreground='#333')
+
+        style.configure('Group.TLabel', font=('Segoe UI', 12, 'bold'), foreground='#555', padding=(0, 10))
+
         self.kernel = Kernel()
 
-        tk.Label(master, text="MySimOS Kernel Control Panel", font=("Arial", 16), fg="blue").pack(pady=10)
+        ttk.Label(root, text="MySimOS Kernel Control Panel", style='Heading.TLabel').pack(pady=20)
 
-        buttons = [
-            ("Process Management", self.process_management_menu),
-            ("Process Scheduler", self.scheduler_menu),
-            ("Memory Management", self.not_implemented),
-            ("I/O Management", self.not_implemented),
-            ("Other Operations", self.not_implemented)
-        ]
+        notebook = ttk.Notebook(root)
 
-        for text, cmd in buttons:
-            tk.Button(master, text=text, width=40, command=cmd).pack(pady=5)
+        process_tab = ttk.Frame(notebook)
+        self.process_management_tab(process_tab)
+        notebook.add(process_tab, text='Process Management')
 
-    def process_management_menu(self):
-        win = tk.Toplevel(self.master)
-        win.title("Process Management")
+        # Scheduler Tab
+        scheduler_tab = ttk.Frame(notebook)
+        self.scheduler_tab(scheduler_tab)
+        notebook.add(scheduler_tab, text='Process Scheduler')
 
-        tk.Label(win, text="Process Management Panel", font=("Arial", 14)).pack(pady=5)
+        process_tab = ttk.Frame(notebook)
+        #self.create_process_management_tab(process_tab)
+        notebook.add(process_tab, text='Memory Management')
+
+        process_tab = ttk.Frame(notebook)
+        #self.create_process_management_tab(process_tab)
+        notebook.add(process_tab, text='I/O management')
+
+        other_tab = ttk.Frame(notebook)
+        self.other_tab(other_tab)
+        notebook.add(other_tab, text='Other Operations')
+
+
+        notebook.pack(expand=True, fill='both', padx=10, pady=10)
+
+    def process_management_tab(self, parent):
+        ttk.Label(parent, text="Manage Processes", style='Group.TLabel').pack(pady=(0, 10))
 
         actions = [
             ("Create a Process", self.create_process),
@@ -42,24 +66,38 @@ class OSControlPanel:
         ]
 
         for text, cmd in actions:
-            tk.Button(win, text=text, width=40, command=cmd).pack(pady=2)
+            ttk.Button(parent, text=text, width=35, command=cmd).pack(pady=3, padx=10, fill='x')
 
-    def scheduler_menu(self):
-        win = tk.Toplevel(self.master)
-        win.title("Process Scheduler")
-
-        tk.Label(win, text="Process Scheduler Panel", font=("Arial", 14)).pack(pady=5)
+    def scheduler_tab(self, parent):
+        ttk.Label(parent, text="Control Process Scheduling", style='Group.TLabel').pack(pady=(0, 10))
 
         buttons = [
-            ("Dispatch (FCFS)", self.dispatch_fcfs),
-            ("Dispatch (Priority)", self.dispatch_priority),
+            ("Scheduling (FCFS)", self.dispatch_fcfs),
+            ("Scheduling (Priority)", self.dispatch_priority),
             ("Show All Queues", self.show_queues)
         ]
 
         for text, cmd in buttons:
-            tk.Button(win, text=text, width=40, command=cmd).pack(pady=2)
+            ttk.Button(parent, text=text, width=35, command=cmd).pack(pady=3, padx=10, fill='x')
 
-    # Process Management Methods
+    def Memory_tab(self, parent):
+        ttk.Label(parent, text="Control Process Scheduling", style='Group.TLabel').pack(pady=(0, 10))
+
+        buttons = [
+            ("Paging"),
+        ]
+
+        for text, cmd in buttons:
+            ttk.Button(parent, text=text, width=35, command=cmd).pack(pady=3, padx=10, fill='x')
+
+    def other_tab(self, parent):
+        ttk.Label(parent, text="Other System Operations", style='Group.TLabel').pack(pady=(0, 10))
+        other_buttons = [
+            ("More...", self.not_implemented)
+        ]
+        for text, cmd in other_buttons:
+            ttk.Button(parent, text=text, width=35, command=cmd, state='disabled').pack(pady=3, padx=10, fill='x')
+
     def create_process(self):
         name = simpledialog.askstring("Create Process", "Enter process name:")
         burst = simpledialog.askinteger("Burst Time", "Enter burst time for the process:", minvalue=1)
@@ -120,7 +158,7 @@ class OSControlPanel:
             tree.heading(col, text=col)
         for p in data:
             tree.insert("", "end", values=(p.pid, p.name, p.state, p.priority, p.burst))
-        tree.pack(fill="both", expand=True)
+        tree.pack(fill="both", expand=True, padx=10, pady=10)
 
     def show_pcb_table(self):
         pid = simpledialog.askstring("Enter PID", "Enter PID to view PCB:")
@@ -136,12 +174,12 @@ class OSControlPanel:
         tree.heading("Value", text="Value")
         for key, val in pcb.items():
             tree.insert("", "end", values=(key, str(val)))
-        tree.pack(fill="both", expand=True)
+        tree.pack(fill="both", expand=True, padx=10, pady=10)
 
     def not_implemented(self):
         messagebox.showinfo("Coming Soon", "This module is not implemented yet.")
 
-    # Process Scheduler Methods
+    # Process Scheduler Methods (No functional changes)
     def dispatch_fcfs(self):
         processes = self.kernel.list_all_processes()
         if not processes:
@@ -154,7 +192,6 @@ class OSControlPanel:
         total_waiting_time = 0
         total_turnaround_time = 0
 
-        # Create a new window for the scheduling result table
         win = tk.Toplevel(self.master)
         win.title("FCFS Scheduling Result")
 
@@ -162,7 +199,7 @@ class OSControlPanel:
         tree = ttk.Treeview(win, columns=cols, show="headings")
         for col in cols:
             tree.heading(col, text=col)
-        tree.pack(fill="both", expand=True)
+        tree.pack(fill="both", expand=True, padx=10, pady=10)
 
         for p in processes:
             start_time = max(current_time, p.arrival)
@@ -174,14 +211,12 @@ class OSControlPanel:
             total_turnaround_time += turnaround_time
             current_time = finish_time
 
-            # Insert data into the table
             tree.insert("", "end",
                         values=(p.pid, p.arrival, p.burst, start_time, finish_time, waiting_time, turnaround_time))
 
         avg_waiting_time = total_waiting_time / len(processes)
         avg_turnaround_time = total_turnaround_time / len(processes)
 
-        # Add average waiting and turnaround times at the bottom of the table
         tree.insert("", "end",
                     values=("Average", "", "", "", "", f"{avg_waiting_time:.2f}", f"{avg_turnaround_time:.2f}"))
 
@@ -197,7 +232,6 @@ class OSControlPanel:
         total_waiting_time = 0
         total_turnaround_time = 0
 
-        # Create a new window for the scheduling result table
         win = tk.Toplevel(self.master)
         win.title("Priority Scheduling Result")
 
@@ -205,7 +239,7 @@ class OSControlPanel:
         tree = ttk.Treeview(win, columns=cols, show="headings")
         for col in cols:
             tree.heading(col, text=col)
-        tree.pack(fill="both", expand=True)
+        tree.pack(fill="both", expand=True, padx=10, pady=10)
 
         for p in processes:
             start_time = max(current_time, p.arrival)
@@ -217,14 +251,12 @@ class OSControlPanel:
             total_turnaround_time += turnaround_time
             current_time = finish_time
 
-            # Insert data into the table
             tree.insert("", "end", values=(
             p.pid, p.arrival, p.burst, p.priority, start_time, finish_time, waiting_time, turnaround_time))
 
         avg_waiting_time = total_waiting_time / len(processes)
         avg_turnaround_time = total_turnaround_time / len(processes)
 
-        # Add average waiting and turnaround times at the bottom of the table
         tree.insert("", "end",
                     values=("Average", "", "", "", "", f"{avg_waiting_time:.2f}", f"{avg_turnaround_time:.2f}"))
 
@@ -238,6 +270,8 @@ class OSControlPanel:
         tree.heading("Processes", text="Processes")
         for queue_name, procs in queues.items():
             tree.insert("", "end", values=(queue_name, ", ".join([p.pid for p in procs])))
-        tree.pack(fill="both", expand=True)
+        tree.pack(fill="both", expand=True, padx=10, pady=10)
 
-
+root = tk.Tk()
+app = OSControlPanel(root)
+root.mainloop()
