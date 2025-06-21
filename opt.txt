@@ -1,0 +1,37 @@
+    def admit(self, process):  # High-level scheduling
+        process.state = "ready"
+        self.ready_queue.append(process)
+
+    def suspend(self, pid):
+        for q in [self.ready_queue, self.blocked_queue]:
+            for proc in list(q):
+                if proc.pid == pid:
+                    q.remove(proc)
+                    proc.state = "suspended"
+                    self.suspended_queue.append(proc)
+                    return True
+        return False
+
+    def resume(self, pid):
+        for proc in list(self.suspended_queue):
+            if proc.pid == pid:
+                self.suspended_queue.remove(proc)
+                proc.state = "ready"
+                self.ready_queue.append(proc)
+                return True
+        return False
+
+    def block_running(self):
+        if self.running_process:
+            self.running_process.state = "blocked"
+            self.blocked_queue.append(self.running_process)
+            self.running_process = None
+
+    def wakeup_blocked(self, pid):
+        for proc in list(self.blocked_queue):
+            if proc.pid == pid:
+                self.blocked_queue.remove(proc)
+                proc.state = "ready"
+                self.ready_queue.append(proc)
+                return True
+        return False
